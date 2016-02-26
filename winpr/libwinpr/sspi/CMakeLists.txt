@@ -27,6 +27,10 @@ set(${MODULE_PREFIX}_NTLM_SRCS
 	NTLM/ntlm.c
 	NTLM/ntlm.h)
 
+set(${MODULE_PREFIX}_KERBEROS_SRCS
+	Kerberos/kerberos.c
+	Kerberos/kerberos.h)
+
 set(${MODULE_PREFIX}_NEGOTIATE_SRCS
 	Negotiate/negotiate.c
 	Negotiate/negotiate.h)
@@ -45,6 +49,8 @@ set(${MODULE_PREFIX}_SRCS
 	sspi_winpr.c
 	sspi_winpr.h
 	sspi_export.c
+	sspi_gss.c
+	sspi_gss.h
 	sspi.c
 	sspi.h)
 
@@ -62,6 +68,10 @@ endif()
 if(MBEDTLS_FOUND)
 	winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
 	winpr_library_add(${MBEDTLS_LIBRARIES})
+endif()
+
+if(GSS_FOUND)
+	winpr_library_add(${GSS_LIBRARIES})
 endif()
 
 if(WIN32)

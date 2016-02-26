@@ -907,7 +907,7 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 	int public_key_length;
 
 	public_key_length = nla->PublicKey.cbBuffer;
-	if (!sspi_SecBufferAlloc(&nla->pubKeyAuth, nla->ContextSizes.cbSecurityTrailer + public_key_length))
+	if (!sspi_SecBufferAlloc(&nla->pubKeyAuth, nla->ContextSizes.cbSecurityTrailer + public_key_length + nla->ContextSizes.cbBlockSize))
 		return SEC_E_INSUFFICIENT_MEMORY;
 	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
 	Buffers[0].cbBuffer = nla->ContextSizes.cbSecurityTrailer;
@@ -928,6 +928,8 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
 	status = nla->table->EncryptMessage(&nla->context, 0, &Message, nla->sendSeqNum++);
+
+	nla->pubKeyAuth.cbBuffer = Buffers[1].cbBuffer + Buffers[0].cbBuffer + nla->ContextSizes.cbBlockSize;
 
 	if (status != SEC_E_OK)
 	{
@@ -951,7 +953,7 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 
-	if ((nla->PublicKey.cbBuffer + nla->ContextSizes.cbSecurityTrailer) != nla->pubKeyAuth.cbBuffer)
+	if ((nla->PublicKey.cbBuffer + nla->ContextSizes.cbSecurityTrailer + nla->ContextSizes.cbBlockSize) != nla->pubKeyAuth.cbBuffer)
 	{
 		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %lu", nla->pubKeyAuth.cbBuffer);
 		return SEC_E_INVALID_TOKEN;
@@ -1256,7 +1258,7 @@ SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 	if (!nla_encode_ts_credentials(nla))
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	if (!sspi_SecBufferAlloc(&nla->authInfo, nla->ContextSizes.cbSecurityTrailer + nla->tsCredentials.cbBuffer))
+	if (!sspi_SecBufferAlloc(&nla->authInfo, nla->ContextSizes.cbSecurityTrailer + nla->tsCredentials.cbBuffer + nla->ContextSizes.cbBlockSize))
 		return SEC_E_INSUFFICIENT_MEMORY;
 	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */	
 	Buffers[0].cbBuffer = nla->ContextSizes.cbSecurityTrailer;
